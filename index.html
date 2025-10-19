@@ -1,10 +1,30 @@
-
-heredoc>
-
 <!DOCTYPE html>
-<html>
-  <body>
-    <h1>✅ 写入测试成功！</h1>
-  </body>
-</html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>🌸 小仙女 Web3 安全演示台 🌸</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
+</head>
+<body>
+  <h1>🪞 小仙女 DApp 演示（安全） 💫</h1>
+  <button id="connectBtn">✨ 连接钱包</button>
+  <p id="addr"></p>
+  <p id="bnb"></p>
+<script>
+let web3, currentAddr;
 
+async function connectWallet(){
+  if(!window.ethereum){ alert('未检测到钱包扩展'); return; }
+  web3 = new Web3(window.ethereum);
+  const accs = await window.ethereum.request({ method:'eth_requestAccounts' });
+  currentAddr = accs[0];
+  document.getElementById('addr').textContent = '地址：' + currentAddr;
+  const balWei = await web3.eth.getBalance(currentAddr);
+  document.getElementById('bnb').textContent =
+      'BNB余额：' + web3.utils.fromWei(balWei, 'ether');
+}
+document.getElementById('connectBtn').onclick = connectWallet;
+</script>
+</body>
+</html>
