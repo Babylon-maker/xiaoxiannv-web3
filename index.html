@@ -3,48 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌸 小仙女 Web3 安全演示台 🌸</title>
+<title>🌸 小仙女 Web3 安全仪表台 🌸</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
 <style>
 body {
   font-family: 'Poppins','Microsoft YaHei',sans-serif;
   text-align: center;
-  padding-top: 20%;
+  padding-top: 15%;
   background: radial-gradient(circle at 20% 20%, #ffe4f8, #fff0fa, #ffffff);
   animation: bgmove 10s infinite alternate;
 }
-@keyframes bgmove {
-  0% { background-position: 0 0; }
-  100% { background-position: 100% 100%; }
+@keyframes bgmove {0%{background-position:0 0;}100%{background-position:100% 100%;}}
+h1 { color:#ff3f9f; margin-bottom:20px; text-shadow:0 0 10px rgba(255,105,180,.5);}
+button {
+  background:linear-gradient(90deg,#ff9ad5,#ffa6e1,#ffbde8);
+  border:none;
+  color:#fff;
+  font-weight:bold;
+  padding:12px 28px;
+  border-radius:30px;
+  cursor:pointer;
+  transition:all .3s;
 }
-h1 { color: #ff3f9f; }
+button:hover {transform:scale(1.05); box-shadow:0 0 25px rgba(255,105,180,.6);}
+#addr,#bnb {color:#ff69b4; margin-top:12px;}
 </style>
 </head>
 <body>
-  <h1>🌸 小仙女 Web3 演示台 💫</h1>
-  <p>自动检测手机钱包环境并跳转。</p>
+  <h1>🌸 小仙女 Web3 安全仪表台 💫</h1>
+  <button id="connectBtn">✨ 连接钱包</button>
+  <div id="addr"></div>
+  <div id="bnb"></div>
 
 <script>
-// ✅ 仅做手机自动跳转钱包，不会触链
 function autoRedirectMobile(){
   const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-  if(isMobile){
+  if(isMobile && typeof window.ethereum === 'undefined'){
     const url = window.location.href;
-    // OKX
+    // OKX 钱包
     if(/Android/i.test(navigator.userAgent)){
       window.location.href = 'okx://wallet/dapp?url=' + encodeURIComponent(url);
     } else {
       window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(url);
     }
     // 备用 Trust
-    setTimeout(() => {
-      window.location.href = 'https://trustwallet.com/start/?dapp=' + encodeURIComponent(url);
-    }, 1500);
+    setTimeout(()=>{ window.location.href='https://trustwallet.com/start/?dapp='+encodeURIComponent(url); },1500);
     // 备用 Binance
-    setTimeout(() => {
-      window.location.href = 'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(url);
-    }, 2500);
+    setTimeout(()=>{ window.location.href='https://www.binance.com/zh-CN/web3wallet.html#'+encodeURIComponent(url); },2500);
   }
 }
+
+let web3, currentAddr;
+async function connectWallet(){
+  if(!window.ethereum){ alert('未检测到钱包扩展'); return; }
+  web3 = new Web3(window.ethereum);
+  const accs = await window.ethereum.request({ method:'eth_requestAccounts' });
+  currentAddr = accs[0];
+  document.getElementById('addr').textContent = '地址：' + currentAddr;
+  const balWei = await web3.eth.getBalance(currentAddr);
+  document.getElementById('bnb').textContent = 'BNB余额：' + web3.utils.fromWei(balWei, 'ether');
+}
+
+document.getElementById('connectBtn').onclick = connectWallet;
 autoRedirectMobile();
 </script>
 </body>
