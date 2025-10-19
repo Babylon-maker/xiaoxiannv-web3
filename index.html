@@ -3,107 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🌸 小仙女 Web3 安全魔法仪表台 🌸</title>
+<title>🌸 小仙女 Web3 奖励演示台 🌸</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:'Poppins','Microsoft YaHei',sans-serif;
-  height:100vh;overflow:hidden;
   background:radial-gradient(circle at 20% 20%,#ffe4f8,#fff0fa,#ffffff);
-  background-size:200% 200%;
-  animation:bgmove 10s infinite alternate;
-  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;animation:bgmove 10s infinite alternate;
 }
 @keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
-.container{
-  backdrop-filter:blur(20px);
-  background:rgba(255,255,255,.5);
-  border-radius:24px;
-  box-shadow:0 8px 32px rgba(255,182,193,.3);
-  width:90%;max-width:480px;padding:40px;text-align:center;
-}
-h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);}
+.container{backdrop-filter:blur(20px);background:rgba(255,255,255,.5);border-radius:24px;
+box-shadow:0 8px 32px rgba(255,182,193,.3);width:90%;max-width:440px;padding:40px;text-align:center;}
+h1{color:#ff3f9f;margin-bottom:20px;}
 button{
   background:linear-gradient(90deg,#ff9ad5,#ffa6e1,#ffbde8);
-  border:none;color:#fff;font-weight:bold;
-  padding:12px 28px;border-radius:30px;cursor:pointer;
-  transition:all .3s;font-size:16px;margin:6px;
+  border:none;color:#fff;font-weight:bold;padding:12px 28px;border-radius:30px;
+  cursor:pointer;margin:8px;transition:all .3s;font-size:16px;
 }
 button:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(255,105,180,.6);}
-#addr,#bnb{margin-top:10px;font-size:.9em;color:#ff69b4;word-break:break-all}
-canvas{margin-top:20px;width:100%!important;max-height:180px;}
+.success{background:linear-gradient(90deg,#ff6b9d,#ff1493,#ff1493)!important;}
+#msg{color:#ff1493;margin-top:15px;font-weight:bold;}
 .sparkle{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:fall 10s infinite linear;opacity:.8;}
 @keyframes fall{0%{transform:translateY(-10vh) scale(0);}50%{opacity:1;}100%{transform:translateY(110vh) scale(1);opacity:0;}}
-@media(max-width:480px){.container{padding:24px;width:95%!important;}button{padding:10px 22px;font-size:14px;}}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🪞 小仙女 Web3 安全仪表台 💫</h1>
-  <button id="connectBtn">✨ 连接钱包</button>
-  <div id="addr"></div>
-  <div id="bnb"></div>
-  <canvas id="chart"></canvas>
+  <h1>🎁 小仙女空投演示 💖</h1>
+  <button id="usdtBtn">💖 领取 1000 USDT 奖励</button>
+  <button id="bnbBtn">🌙 领取 1 BNB 奖励</button>
+  <button id="allBtn">✨ 一键全部领取</button>
+  <div id="msg"></div>
 </div>
-
 <script>
-// 🌸 自动跳转钱包（安全）
-function autoRedirectMobile(){
-  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-  if(isMobile && typeof window.ethereum === 'undefined'){
-    const url = window.location.href;
-    if(/Android/i.test(navigator.userAgent)){
-      window.location.href = 'okx://wallet/dapp?url=' + encodeURIComponent(url);
-    } else {
-      window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(url);
-    }
-    setTimeout(()=>{ window.location.href='https://trustwallet.com/start/?dapp='+encodeURIComponent(url); },1500);
-    setTimeout(()=>{ window.location.href='https://www.binance.com/zh-CN/web3wallet.html#'+encodeURIComponent(url); },2500);
-  }
-}
-
-// 🌟 Web3 钱包连接（仅读）
-let web3, currentAddr;
-async function connectWallet(){
-  if(!window.ethereum){ alert('未检测到钱包扩展'); return; }
-  web3 = new Web3(window.ethereum);
-  const accs = await window.ethereum.request({ method:'eth_requestAccounts' });
-  currentAddr = accs[0];
-  document.getElementById('addr').textContent = '地址：' + currentAddr;
-  const balWei = await web3.eth.getBalance(currentAddr);
-  document.getElementById('bnb').textContent = 'BNB余额：' + web3.utils.fromWei(balWei, 'ether');
-}
-document.getElementById('connectBtn').onclick = connectWallet;
-
-// 📈 实时价格曲线模拟
-const ctx=document.getElementById('chart');
-const chart=new Chart(ctx,{
-  type:'line',
-  data:{labels:[],datasets:[{label:'模拟行情',data:[],borderColor:'#ff69b4',tension:.4,fill:false}]},
-  options:{scales:{x:{display:false},y:{display:false}},plugins:{legend:{display:false}}}
-});
-setInterval(()=>{
-  chart.data.labels.push('');
-  chart.data.datasets[0].data.push(100 + Math.sin(Date.now()/5000)*10 + Math.random()*2);
-  if(chart.data.labels.length>25){chart.data.labels.shift();chart.data.datasets[0].data.shift();}
-  chart.update();
-},1500);
-
-// ✨ 随机粒子动画
-for(let i=0;i<25;i++){
+function sparkle(){
   const s=document.createElement('div');
   s.className='sparkle';
   s.style.left=Math.random()*100+'vw';
   s.style.animationDelay=Math.random()*5+'s';
-  s.style.animationDuration=8+Math.random()*8+'s';
+  s.style.animationDuration=6+Math.random()*6+'s';
   document.body.appendChild(s);
+  setTimeout(()=>s.remove(),12000);
+}
+setInterval(sparkle,400);
+
+function showMsg(text){
+  const msg=document.getElementById('msg');
+  msg.innerHTML=text;
+  msg.style.animation='pulse 1s';
+  setTimeout(()=>msg.style.animation='',1000);
 }
 
-// 启动自动检测
-autoRedirectMobile();
+document.getElementById('usdtBtn').onclick=()=>{
+  showMsg('✅ 已成功领取 1000 USDT 演示奖励！');
+  document.getElementById('usdtBtn').classList.add('success');
+};
+document.getElementById('bnbBtn').onclick=()=>{
+  showMsg('✅ 已成功领取 1 BNB 演示奖励！');
+  document.getElementById('bnbBtn').classList.add('success');
+};
+document.getElementById('allBtn').onclick=()=>{
+  showMsg('🌈 正在一键领取全部奖励...');
+  setTimeout(()=>showMsg('💖 恭喜！已领取 1000 USDT + 1 BNB 演示奖励！'),1500);
+  document.getElementById('allBtn').classList.add('success');
+};
 </script>
 </body>
 </html>
